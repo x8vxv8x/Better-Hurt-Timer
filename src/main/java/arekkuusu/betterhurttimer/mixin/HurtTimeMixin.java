@@ -1,6 +1,5 @@
 package arekkuusu.betterhurttimer.mixin;
 
-import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.BHTConfig;
 import arekkuusu.betterhurttimer.api.BHTAPI;
 import arekkuusu.betterhurttimer.api.capability.Capabilities;

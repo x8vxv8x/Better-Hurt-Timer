@@ -2,6 +2,7 @@
 	"package": "arekkuusu.betterhurttimer.mixin",
 	"required": true,
 	"refmap": "mixins.betterhurttimer.refmap.json",
+	"plugin": "arekkuusu.betterhurttimer.MixinPlugin",
 	"target": "@env(DEFAULT)",
 	"minVersion": "0.8.5",
 	"compatibilityLevel": "JAVA_8",

@@ -21,13 +21,12 @@ import java.util.regex.Pattern;
 
 @Mod(
         modid = BHT.MOD_ID,
-        name = BHT.MOD_NAME,
+        name = Tags.MOD_NAME,
         version = Tags.VERSION
 )
 public class BHT {
 
     public static final String MOD_ID = "betterhurttimer";
-    public static final String MOD_NAME = "Better Hurt Timer";
 
     @SidedProxy(serverSide = "arekkuusu.betterhurttimer.proxy.ServerProxy",
                 clientSide = "arekkuusu.betterhurttimer.proxy.ClientProxy")

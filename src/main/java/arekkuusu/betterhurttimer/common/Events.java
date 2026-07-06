@@ -21,7 +21,6 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSourceIndirect;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -46,9 +45,7 @@ public class Events {
             Capabilities.hurt(entity).ifPresent(capability -> {
                 //Source Damage i-Frames
                 if (!capability.hurtMap.isEmpty()) {
-                    capability.hurtMap.forEach((s, data) -> {
-                        data.update();
-                    });
+                    capability.hurtMap.forEach((s, data) -> data.update());
                 }
                 //Melee i-Frames
                 if (!capability.meleeMap.isEmpty()) {
