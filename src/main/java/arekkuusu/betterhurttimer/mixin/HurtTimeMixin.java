@@ -47,8 +47,7 @@ public abstract class HurtTimeMixin extends Entity {
             if (capability != null && attacker != null) {
                 long worldTime = target.world.getTotalWorldTime();
                 if (capability.currentDirectHitTick != worldTime) {
-                    capability.currentDirectHitTick = worldTime;
-                    capability.currentDirectAttackers.clear();
+                    return target.hurtResistantTime;
                 }
                 if (!capability.currentDirectAttackers.contains(attacker.getEntityId())) {
                     return 0;

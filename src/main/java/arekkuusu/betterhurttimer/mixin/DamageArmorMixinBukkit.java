@@ -19,13 +19,9 @@ public abstract class DamageArmorMixinBukkit {
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
             if (capability.shieldDamageCooldownUntil > worldTime) {
-                if (Double.compare(Math.max(0, capability.lastShieldDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
-                    damageShield((float) (damage - capability.lastShieldDamage));
-                    capability.lastShieldDamage = damage;
-                }
+                return;
             } else {
                 damageShield(damage);
-                capability.lastShieldDamage = damage;
                 capability.shieldDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.shieldResistantTime;
             }
         } else {
@@ -39,13 +35,9 @@ public abstract class DamageArmorMixinBukkit {
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
             if (capability.armorDamageCooldownUntil > worldTime) {
-                if (Double.compare(Math.max(0, capability.lastArmorDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
-                    damageArmor((float) (damage - capability.lastArmorDamage));
-                    capability.lastArmorDamage = damage;
-                }
+                return;
             } else {
                 damageArmor(damage);
-                capability.lastArmorDamage = damage;
                 capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
             }
         } else {

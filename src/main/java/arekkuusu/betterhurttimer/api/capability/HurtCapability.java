@@ -30,8 +30,6 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     public Object2ObjectMap<CharSequence, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
     public long armorDamageCooldownUntil = Long.MIN_VALUE;
     public long shieldDamageCooldownUntil = Long.MIN_VALUE;
-    public double lastArmorDamage;
-    public double lastShieldDamage;
     public long lastDirectAttackTick = Long.MIN_VALUE;
     public long currentAttackAttemptTick = Long.MIN_VALUE;
     public int currentAttackAttemptMarker = Integer.MIN_VALUE;

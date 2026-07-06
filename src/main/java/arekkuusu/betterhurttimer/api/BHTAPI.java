@@ -64,4 +64,12 @@ public final class BHTAPI {
                 c.hurtMap.computeIfAbsent(info.sourceName, BHTAPI.HURT_SOURCE_DATA_FUNCTION.apply(info))
         );
     }
+
+    public static Optional<HurtSourceData> getFixed(EntityLivingBase entity, DamageSource source, int waitTime) {
+        String damageType = source.getDamageType();
+        HurtSourceInfo info = new HurtSourceInfo(damageType, waitTime);
+        return Capabilities.hurt(entity).map(c ->
+                c.hurtMap.computeIfAbsent(damageType, BHTAPI.HURT_SOURCE_DATA_FUNCTION.apply(info))
+        );
+    }
 }

@@ -4,11 +4,9 @@ import arekkuusu.betterhurttimer.api.BHTAPI;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.api.capability.data.HurtSourceInfo;
 import arekkuusu.betterhurttimer.common.command.CommandExport;
-import arekkuusu.betterhurttimer.proxy.CommonProxy;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLFingerprintViolationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -27,11 +25,6 @@ import java.util.regex.Pattern;
 public class BHT {
 
     public static final String MOD_ID = "betterhurttimer";
-
-    @SidedProxy(serverSide = "arekkuusu.betterhurttimer.proxy.ServerProxy",
-                clientSide = "arekkuusu.betterhurttimer.proxy.ClientProxy")
-
-    public static CommonProxy proxy;
 
     public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
 
@@ -85,13 +78,7 @@ public class BHT {
             Matcher m = r.matcher(s);
             if (mLegacy.matches()) {
                 BHTAPI.addSource(new HurtSourceInfo(mLegacy.group(1), Integer.parseInt(mLegacy.group(3))));
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " uses the legacy source:stack:ticks format; please update it to source:ticks");
             } else if (m.matches()) {
                 BHTAPI.addSource(new HurtSourceInfo(m.group(1), Integer.parseInt(m.group(2))));
             } else {

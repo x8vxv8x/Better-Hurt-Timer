@@ -20,7 +20,6 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSourceIndirect;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -51,31 +50,21 @@ public class Events {
 
         DamageSource source = event.getSource();
         EntityLivingBase entity = event.getEntityLiving();
-        Optional<HurtSourceData> optional = BHTAPI.get(entity, source);
+        if (Events.isDirectAttack(source)) return;
+
+        Optional<HurtSourceData> optional = BHTConfig.CONFIG.damageFrames.useVanillaNonDirectDamageFrames ?
+                BHTAPI.getFixed(entity, source, BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime) :
+                BHTAPI.get(entity, source);
         long worldTime = entity.world.getTotalWorldTime();
 
-        if (Events.isAttack(source) && !(source instanceof EntityDamageSourceIndirect)) return;
         if (!optional.isPresent()) return;
 
         HurtSourceData data = optional.orElseThrow(UnsupportedOperationException::new);
-        if (!data.hasTriggered()) {
+        if (data.canApply(worldTime)) {
             data.trigger(worldTime);
             return;
         }
-
-        if (!data.canApply(worldTime)) {
-            float lastAmount = event.getAmount();
-            if (Double.compare(data.lastHurtAmount + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference, event.getAmount()) > 0) {
-                if (BHTConfig.CONFIG.damageFrames.nextAttackDamageDifferenceApply) {
-                    event.setAmount(lastAmount - Math.max(0, (float) data.lastHurtAmount));
-                }
-                data.lastHurtAmount = lastAmount;
-            } else {
-                event.setCanceled(true);
-            }
-        } else {
-            data.trigger(worldTime);
-        }
+        event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

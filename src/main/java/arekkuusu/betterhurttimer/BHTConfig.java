@@ -35,25 +35,27 @@ public class BHTConfig {
             @Config.RangeInt(min = -1)
             public int hurtResistantTimePlayer = -1;
             @Config.Comment("Default value replacing vanilla's iFrame after armor damage." +
-                    "\n# Used mainly to prevent armor from wearing down too fast" +
-                    "\n# If the next attack deals more than the previous the difference is applied")
+                    "\n# Used mainly to prevent armor from wearing down too fast")
             @Config.RangeInt(min = 0)
             public int armorResistantTime = 5;
             @Config.Comment("Default value replacing vanilla's iFrame after shield damage." +
-                    "\n# Used mainly to prevent shield from wearing down too fast" +
-                    "\n# If the next attack deals more than the previous the difference is applied")
+                    "\n# Used mainly to prevent shield from wearing down too fast")
             @Config.RangeInt(min = 0)
             public int shieldResistantTime = 5;
+            @Config.Comment("When enabled, non-direct damage uses a simple per-damage-type cooldown instead of the configured damageSource list.")
+            public boolean useVanillaNonDirectDamageFrames = false;
+            @Config.Comment("How often the same non-direct damage type can hurt the same entity when vanilla non-direct damage frames are enabled.")
+            @Config.RangeInt(min = 0)
+            public int nonDirectDamageResistantTime = 10;
             @Config.Comment("Damage sources that need a specific iFrame." +
-                    "\n\nFormat: [*Damage Source name (Regex)]:[*Should damage stack between iFrames]:[*iFrame time]" +
+                    "\n# Used only when useVanillaNonDirectDamageFrames is false." +
+                    "\n\nFormat: [*Damage Source name (Regex)]:[*iFrame time]" +
                     "\n* Damage Source name -> Used to identify the type of damage you're receiving." +
-                    "\n* Should damage stack between iFrames -> 'true' or 'false', when set to 'true' damage will always stack regardless of the iFrame, but it will only apply the damage every iFrame." +
                     "\n* iFrame time -> How often you can receive damage from this damage source." +
                     "\n\n\nExamples:" +
-                    "\n- inFire:false:10 -> Source 'inFire' does not stack and only allows hits every 10 game ticks." +
-                    "\n- inFire|lava:false:10 -> Sources 'inFire' or 'lava' do not stack and only allows hits every 10 game ticks (lava and fire will share the same iFrame)." +
-                    "\n- arrow:true:10 - > Source 'arrow' does stack and hits the accumulated damage every 10 game ticks." +
-                    "\n\n# If the next attack deals more than the previous the difference is applied" +
+                    "\n- ^inFire$:10 -> Source 'inFire' only allows hits every 10 game ticks." +
+                    "\n- ^(inFire|lava)$:10 -> Sources 'inFire' or 'lava' share the same 10 tick iFrame." +
+                    "\n- ^fall$:0 -> Source 'fall' has no additional iFrame." +
                     "\n")
             public String[] damageSource = {
                     "^inFire$:10",
@@ -77,10 +79,6 @@ public class BHTConfig {
                     "^thorns$:5",
                     "^explosion\\.player$:5"
             };
-            @Config.RangeDouble(min = 0)
-            public double nextAttackDamageDifference = 0.5D;
-            @Config.RangeDouble(min = 0)
-            public boolean nextAttackDamageDifferenceApply = true;
         }
 
         public static class AttackFrames {

@@ -3,7 +3,6 @@ package arekkuusu.betterhurttimer.api.capability.data;
 public class HurtSourceData {
 
     public final HurtSourceInfo info;
-    public double lastHurtAmount;
     private long lastHurtTick = Long.MIN_VALUE;
 
     public HurtSourceData(HurtSourceInfo info) {
@@ -20,6 +19,5 @@ public class HurtSourceData {
 
     public void trigger(long worldTime) {
         this.lastHurtTick = worldTime;
-        this.lastHurtAmount = 0;
     }
 }

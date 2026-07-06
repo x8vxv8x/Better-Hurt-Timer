@@ -6,43 +6,26 @@ import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.NonNullList;
 import net.minecraftforge.common.ISpecialArmor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ISpecialArmor.ArmorProperties.class)
 public abstract class DamageSpecialArmorMixin {
 
-    private static double damageAlt;
-
-    @Inject(method = "applyArmor(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/util/NonNullList;Lnet/minecraft/util/DamageSource;D)F", at = @At(target = "Ljava/util/ArrayList;<init>()V", value = "INVOKE", shift = At.Shift.BEFORE), remap = false)
-    private static void applyArmorPre(EntityLivingBase entity, NonNullList<ItemStack> inventory, DamageSource source, double damage, CallbackInfoReturnable<Float> info) {
+    @Redirect(method = "applyArmor(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/util/NonNullList;Lnet/minecraft/util/DamageSource;D)F", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/common/ISpecialArmor;damageArmor(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/item/ItemStack;Lnet/minecraft/util/DamageSource;II)V"), remap = false)
+    private static void damageSpecialArmor(ISpecialArmor armor, EntityLivingBase entity, ItemStack stack, DamageSource source, int damage, int slot) {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
             if (capability.armorDamageCooldownUntil > worldTime) {
-                if (Double.compare(Math.max(0, capability.lastArmorDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
-                    damageAlt = damage - capability.lastArmorDamage;
-                } else {
-                    damageAlt = damage;
-                }
-                capability.lastArmorDamage = damage;
-            } else {
-                damageAlt = damage;
-                capability.lastArmorDamage = damage;
-                capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
+                return;
             }
-        } else {
-            damageAlt = damage;
+            armor.damageArmor(entity, stack, source, damage, slot);
+            capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
+            return;
         }
-    }
-
-    @ModifyVariable(method = "applyArmor(Lnet/minecraft/entity/EntityLivingBase;Lnet/minecraft/util/NonNullList;Lnet/minecraft/util/DamageSource;D)F", at = @At(target = "Ljava/util/ArrayList;<init>()V", value = "INVOKE", shift = At.Shift.AFTER), remap = false, argsOnly = true)
-    private static double applyArmorPost(double damage) {
-        return damageAlt;
+        armor.damageArmor(entity, stack, source, damage, slot);
     }
 }

@@ -4,10 +4,25 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Collections;
 import java.util.Set;
 
 public class MixinPlugin implements IMixinConfigPlugin {
+
+    private static final Set<String> CONFIG_DISABLED_MIXINS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "AttackEntityMixin",
+            "DamageArmorMixin",
+            "DamageArmorMixinBukkit",
+            "DamageArmorMixinOverride",
+            "DamageSpecialArmorMixin",
+            "HurtAnimationMixin",
+            "HurtCameraEffectMixin",
+            "HurtTimeMixin",
+            "KnockbackMixin"
+    )));
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -26,6 +41,10 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
         String simpleName = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
 
+        if (BHTConfig.CONFIG.attackFrames.turnOffMixins && CONFIG_DISABLED_MIXINS.contains(simpleName)) {
+            return false;
+        }
+
         switch (simpleName) {
             case "DamageArmorMixin":
                 return !hasClass("org.bukkit.plugin.Plugin");
@@ -33,8 +52,6 @@ public class MixinPlugin implements IMixinConfigPlugin {
                 return hasClass("org.bukkit.plugin.Plugin");
             case "DamageArmorMixinOverride":
                 return hasClass("com.robertx22.mine_and_slash.mixins.LivingEntityMixin");
-            case "DamageArmorMixinObscureApi":
-                return hasClass("com.obscuria.obscureapi.ObscureAPI");
             default:
                 return true;
         }
