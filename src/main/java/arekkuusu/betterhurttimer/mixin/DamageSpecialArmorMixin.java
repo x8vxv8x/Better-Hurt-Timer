@@ -23,7 +23,8 @@ public abstract class DamageSpecialArmorMixin {
     private static void applyArmorPre(EntityLivingBase entity, NonNullList<ItemStack> inventory, DamageSource source, double damage, CallbackInfoReturnable<Float> info) {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
-            if (capability.ticksToArmorDamage > 0) {
+            long worldTime = entity.world.getTotalWorldTime();
+            if (capability.armorDamageCooldownUntil > worldTime) {
                 if (Double.compare(Math.max(0, capability.lastArmorDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
                     damageAlt = damage - capability.lastArmorDamage;
                 } else {
@@ -33,6 +34,7 @@ public abstract class DamageSpecialArmorMixin {
             } else {
                 damageAlt = damage;
                 capability.lastArmorDamage = damage;
+                capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
             }
         } else {
             damageAlt = damage;

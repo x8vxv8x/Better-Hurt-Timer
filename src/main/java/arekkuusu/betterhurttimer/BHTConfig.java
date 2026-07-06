@@ -154,7 +154,10 @@ public class BHTConfig {
     public static class EventHandler {
         @SubscribeEvent
         public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
-            if (event.getModID().equals(BHT.MOD_ID)) ConfigManager.sync(BHT.MOD_ID, Config.Type.INSTANCE);
+            if (event.getModID().equals(BHT.MOD_ID)) {
+                ConfigManager.sync(BHT.MOD_ID, Config.Type.INSTANCE);
+                BHT.reloadRuntimeCaches();
+            }
         }
     }
 }

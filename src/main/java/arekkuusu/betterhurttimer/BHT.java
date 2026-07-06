@@ -42,11 +42,18 @@ public class BHT {
 
     @EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        this.initAttackFrames();
-        this.initDamageFrames();
+        reloadRuntimeCaches();
     }
 
-    public void initAttackFrames() {
+    public static void reloadRuntimeCaches() {
+        initAttackFrames();
+        initDamageFrames();
+        arekkuusu.betterhurttimer.common.Events.refreshConfigCaches();
+    }
+
+    public static void initAttackFrames() {
+        BHTAPI.ATTACK_THRESHOLD_MAP.clear();
+        BHTAPI.ATTACK_ITEM_THRESHOLD_MAP.clear();
         String patternAttackFrames = "^(.*:.*):((\\d*\\.)?\\d+)$";
         Pattern r = Pattern.compile(patternAttackFrames);
         for (String s : BHTConfig.CONFIG.attackFrames.attackThreshold) {
@@ -67,7 +74,7 @@ public class BHT {
         }
     }
 
-    public void initDamageFrames() {
+    public static void initDamageFrames() {
         BHTAPI.DAMAGE_SOURCE_INFO_MAP.clear();
         String patternAttackFramesLegacy = "^(.*):(true|false):(\\d+)$";
         Pattern rLegacy = Pattern.compile(patternAttackFramesLegacy);

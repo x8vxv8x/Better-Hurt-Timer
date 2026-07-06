@@ -17,7 +17,8 @@ public abstract class DamageArmorMixin {
     public void damageShield(EntityLivingBase entity, float damage) {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
-            if (capability.ticksToShieldDamage > 0) {
+            long worldTime = entity.world.getTotalWorldTime();
+            if (capability.shieldDamageCooldownUntil > worldTime) {
                 if (Double.compare(Math.max(0, capability.lastShieldDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
                     damageShield((float) (damage - capability.lastShieldDamage));
                     capability.lastShieldDamage = damage;
@@ -25,7 +26,7 @@ public abstract class DamageArmorMixin {
             } else {
                 damageShield(damage);
                 capability.lastShieldDamage = damage;
-                capability.ticksToShieldDamage = BHTConfig.CONFIG.damageFrames.shieldResistantTime;
+                capability.shieldDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.shieldResistantTime;
             }
         } else {
             damageShield(damage);
@@ -36,7 +37,8 @@ public abstract class DamageArmorMixin {
     public void damageArmor(EntityLivingBase entity, float damage) {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
-            if (capability.ticksToArmorDamage > 0) {
+            long worldTime = entity.world.getTotalWorldTime();
+            if (capability.armorDamageCooldownUntil > worldTime) {
                 if (Double.compare(Math.max(0, capability.lastArmorDamage + BHTConfig.CONFIG.damageFrames.nextAttackDamageDifference), damage) < 0) {
                     damageArmor((float) (damage - capability.lastArmorDamage));
                     capability.lastArmorDamage = damage;
@@ -44,7 +46,7 @@ public abstract class DamageArmorMixin {
             } else {
                 damageArmor(damage);
                 capability.lastArmorDamage = damage;
-                capability.ticksToArmorDamage = BHTConfig.CONFIG.damageFrames.armorResistantTime;
+                capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
             }
         } else {
             damageArmor(damage);

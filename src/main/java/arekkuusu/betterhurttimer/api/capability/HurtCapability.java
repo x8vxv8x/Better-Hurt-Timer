@@ -2,7 +2,6 @@ package arekkuusu.betterhurttimer.api.capability;
 
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.api.BHTAPI;
-import arekkuusu.betterhurttimer.api.capability.data.AttackInfo;
 import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -22,17 +21,19 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.WeakHashMap;
 
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
 
     public Object2ObjectMap<CharSequence, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
-    public WeakHashMap<Entity, AttackInfo> meleeMap = new WeakHashMap<>();
-    public int ticksToArmorDamage;
-    public int ticksToShieldDamage;
+    public long armorDamageCooldownUntil = Long.MIN_VALUE;
+    public long shieldDamageCooldownUntil = Long.MIN_VALUE;
     public double lastArmorDamage;
     public double lastShieldDamage;
+    public long lastDirectAttackTick = Long.MIN_VALUE;
+    public long currentAttackAttemptTick = Long.MIN_VALUE;
+    public int currentAttackAttemptMarker = Integer.MIN_VALUE;
+    public boolean currentAttackAttemptAllowed;
 
     public static void init() {
         CapabilityManager.INSTANCE.register(HurtCapability.class, new HurtCapability(), HurtCapability::new);
@@ -61,23 +62,23 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     }
 
     //** NBT **//
-    public static final String LAST_ARMOR_TIMER_NBT = "ticksToArmorDamage";
-    public static final String LAST_SHIELD_TIMER_NBT = "ticksToShieldDamage";
+    public static final String LAST_ARMOR_TIMER_NBT = "armorDamageCooldownUntil";
+    public static final String LAST_SHIELD_TIMER_NBT = "shieldDamageCooldownUntil";
 
     @Override
     @Nullable
     public NBTBase writeNBT(Capability<HurtCapability> capability, HurtCapability instance, EnumFacing side) {
         NBTTagCompound tag = new NBTTagCompound();
-        tag.setInteger(LAST_ARMOR_TIMER_NBT, instance.ticksToArmorDamage);
-        tag.setInteger(LAST_SHIELD_TIMER_NBT, instance.ticksToShieldDamage);
+        tag.setLong(LAST_ARMOR_TIMER_NBT, instance.armorDamageCooldownUntil);
+        tag.setLong(LAST_SHIELD_TIMER_NBT, instance.shieldDamageCooldownUntil);
         return tag;
     }
 
     @Override
     public void readNBT(Capability<HurtCapability> capability, HurtCapability instance, EnumFacing side, NBTBase nbt) {
         NBTTagCompound tag = (NBTTagCompound) nbt;
-        instance.ticksToArmorDamage = tag.getInteger(LAST_ARMOR_TIMER_NBT);
-        instance.ticksToShieldDamage = tag.getInteger(LAST_SHIELD_TIMER_NBT);
+        instance.armorDamageCooldownUntil = tag.hasKey(LAST_ARMOR_TIMER_NBT) ? tag.getLong(LAST_ARMOR_TIMER_NBT) : tag.getInteger(LAST_ARMOR_TIMER_NBT);
+        instance.shieldDamageCooldownUntil = tag.hasKey(LAST_SHIELD_TIMER_NBT) ? tag.getLong(LAST_SHIELD_TIMER_NBT) : tag.getInteger(LAST_SHIELD_TIMER_NBT);
     }
     //** NBT **//
 
