@@ -1,0 +1,106 @@
+package arekkuusu.betterhurttimer;
+
+import arekkuusu.betterhurttimer.api.BHTAPI;
+import arekkuusu.betterhurttimer.api.capability.HurtCapability;
+import arekkuusu.betterhurttimer.api.capability.data.HurtSourceInfo;
+import arekkuusu.betterhurttimer.common.command.CommandExport;
+import arekkuusu.betterhurttimer.proxy.CommonProxy;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLFingerprintViolationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@Mod(
+        modid = BHT.MOD_ID,
+        name = BHT.MOD_NAME,
+        version = Tags.VERSION
+)
+public class BHT {
+
+    public static final String MOD_ID = "betterhurttimer";
+    public static final String MOD_NAME = "Better Hurt Timer";
+
+    @SidedProxy(serverSide = "arekkuusu.betterhurttimer.proxy.ServerProxy",
+                clientSide = "arekkuusu.betterhurttimer.proxy.ClientProxy")
+
+    public static CommonProxy proxy;
+
+    public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        HurtCapability.init();
+    }
+
+    @EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        this.initAttackFrames();
+        this.initDamageFrames();
+    }
+
+    public void initAttackFrames() {
+        String patternAttackFrames = "^(.*:.*):((\\d*\\.)?\\d+)$";
+        Pattern r = Pattern.compile(patternAttackFrames);
+        for (String s : BHTConfig.CONFIG.attackFrames.attackThreshold) {
+            Matcher m = r.matcher(s);
+            if (m.matches()) {
+                BHTAPI.addAttacker(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
+            } else {
+                BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
+            }
+        }
+        for (String s : BHTConfig.CONFIG.attackFrames.itemSource) {
+            Matcher m = r.matcher(s);
+            if (m.matches()) {
+                BHTAPI.addItem(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
+            } else {
+                BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
+            }
+        }
+    }
+
+    public void initDamageFrames() {
+        BHTAPI.DAMAGE_SOURCE_INFO_MAP.clear();
+        String patternAttackFramesLegacy = "^(.*):(true|false):(\\d+)$";
+        Pattern rLegacy = Pattern.compile(patternAttackFramesLegacy);
+        String patternAttackFrames = "^(.*):(\\d+)$";
+        Pattern r = Pattern.compile(patternAttackFrames);
+        for (String s : BHTConfig.CONFIG.damageFrames.damageSource) {
+            Matcher mLegacy = rLegacy.matcher(s);
+            Matcher m = r.matcher(s);
+            if (mLegacy.matches()) {
+                BHTAPI.addSource(new HurtSourceInfo(mLegacy.group(1), Integer.parseInt(mLegacy.group(3))));
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " is no longer a valid format, please DELETE and BACKUP the betterhurttimer-common.toml file");
+            } else if (m.matches()) {
+                BHTAPI.addSource(new HurtSourceInfo(m.group(1), Integer.parseInt(m.group(2))));
+            } else {
+                BHT.LOG.warn("[Damage Frames Config] - String " + s + " is not a valid format");
+            }
+        }
+    }
+
+    @EventHandler
+    public void onServerLoad(FMLServerStartingEvent event) {
+        event.registerServerCommand(new CommandExport());
+    }
+
+    @EventHandler
+    public void onFingerprintViolation(FMLFingerprintViolationEvent event) {
+        LOG.warn("Invalid fingerprint detected!");
+    }
+}
