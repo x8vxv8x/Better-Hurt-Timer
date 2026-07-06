@@ -205,6 +205,13 @@ public class Events {
         return ATTACK_SOURCES.contains(source.getDamageType());
     }
 
+    public static boolean isDirectAttack(DamageSource source) {
+        if (source == null || source instanceof EntityDamageSourceIndirect) {
+            return false;
+        }
+        return Events.isAttack(source) || BHTAPI.isCustom(source.getImmediateSource());
+    }
+
     @SubscribeEvent()
     public static void onKnockback(PreLivingKnockBackEvent event) {
         if (isClientWorld(event.getEntityLiving())) return;

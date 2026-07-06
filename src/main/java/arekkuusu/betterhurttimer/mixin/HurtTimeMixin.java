@@ -1,6 +1,9 @@
 package arekkuusu.betterhurttimer.mixin;
 
 import arekkuusu.betterhurttimer.BHTConfig;
+import arekkuusu.betterhurttimer.api.capability.Capabilities;
+import arekkuusu.betterhurttimer.api.capability.HurtCapability;
+import arekkuusu.betterhurttimer.common.Events;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -38,6 +41,20 @@ public abstract class HurtTimeMixin extends Entity {
 
     @Redirect(method = "attackEntityFrom(Lnet/minecraft/util/DamageSource;F)Z", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/EntityLivingBase;hurtResistantTime:I", ordinal = 0))
     public int attackResistantOverride(EntityLivingBase target) {
+        if (target.hurtResistantTime > 0 && Events.isDirectAttack(this.preDamageSource)) {
+            HurtCapability capability = Capabilities.hurt(target).orElse(null);
+            Entity attacker = this.preDamageSource.getTrueSource();
+            if (capability != null && attacker != null) {
+                long worldTime = target.world.getTotalWorldTime();
+                if (capability.currentDirectHitTick != worldTime) {
+                    capability.currentDirectHitTick = worldTime;
+                    capability.currentDirectAttackers.clear();
+                }
+                if (!capability.currentDirectAttackers.contains(attacker.getEntityId())) {
+                    return 0;
+                }
+            }
+        }
         return target.hurtResistantTime;
     }
 
@@ -46,6 +63,18 @@ public abstract class HurtTimeMixin extends Entity {
         int hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTime;
         if ((Object) this instanceof EntityPlayer && BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer >= 0) {
             hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer;
+        }
+        if (Events.isDirectAttack(source)) {
+            HurtCapability capability = Capabilities.hurt(this).orElse(null);
+            Entity attacker = source.getTrueSource();
+            if (capability != null && attacker != null) {
+                long worldTime = this.world.getTotalWorldTime();
+                if (capability.currentDirectHitTick != worldTime) {
+                    capability.currentDirectHitTick = worldTime;
+                    capability.currentDirectAttackers.clear();
+                }
+                capability.currentDirectAttackers.add(attacker.getEntityId());
+            }
         }
         this.hurtResistantTime = hurtResistantTime;
         if (this.preHurtTime > 0) {

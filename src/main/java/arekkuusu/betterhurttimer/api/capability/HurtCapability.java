@@ -21,6 +21,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
@@ -34,6 +36,8 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     public long currentAttackAttemptTick = Long.MIN_VALUE;
     public int currentAttackAttemptMarker = Integer.MIN_VALUE;
     public boolean currentAttackAttemptAllowed;
+    public long currentDirectHitTick = Long.MIN_VALUE;
+    public final Set<Integer> currentDirectAttackers = new HashSet<>();
 
     public static void init() {
         CapabilityManager.INSTANCE.register(HurtCapability.class, new HurtCapability(), HurtCapability::new);
