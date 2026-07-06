@@ -1,8 +1,7 @@
 package arekkuusu.betterhurttimer;
 
-import arekkuusu.betterhurttimer.api.BHTAPI;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
-import arekkuusu.betterhurttimer.api.capability.data.HurtSourceInfo;
+import arekkuusu.betterhurttimer.common.RuntimeData;
 import arekkuusu.betterhurttimer.common.command.CommandExport;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
@@ -45,14 +44,14 @@ public class BHT {
     }
 
     public static void initAttackFrames() {
-        BHTAPI.ATTACK_THRESHOLD_MAP.clear();
-        BHTAPI.ATTACK_ITEM_THRESHOLD_MAP.clear();
+        RuntimeData.ATTACK_THRESHOLDS.clear();
+        RuntimeData.ATTACK_ITEM_THRESHOLDS.clear();
         String patternAttackFrames = "^(.*:.*):((\\d*\\.)?\\d+)$";
         Pattern r = Pattern.compile(patternAttackFrames);
         for (String s : BHTConfig.CONFIG.attackFrames.attackThreshold) {
             Matcher m = r.matcher(s);
             if (m.matches()) {
-                BHTAPI.addAttacker(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
+                RuntimeData.ATTACK_THRESHOLDS.put(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
             } else {
                 BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
             }
@@ -60,7 +59,7 @@ public class BHT {
         for (String s : BHTConfig.CONFIG.attackFrames.itemSource) {
             Matcher m = r.matcher(s);
             if (m.matches()) {
-                BHTAPI.addItem(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
+                RuntimeData.ATTACK_ITEM_THRESHOLDS.put(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
             } else {
                 BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
             }
@@ -68,19 +67,13 @@ public class BHT {
     }
 
     public static void initDamageFrames() {
-        BHTAPI.DAMAGE_SOURCE_INFO_MAP.clear();
-        String patternAttackFramesLegacy = "^(.*):(true|false):(\\d+)$";
-        Pattern rLegacy = Pattern.compile(patternAttackFramesLegacy);
-        String patternAttackFrames = "^(.*):(\\d+)$";
+        RuntimeData.DAMAGE_SOURCE_TIMES.clear();
+        String patternAttackFrames = "^([^:]+):(\\d+)$";
         Pattern r = Pattern.compile(patternAttackFrames);
         for (String s : BHTConfig.CONFIG.damageFrames.damageSource) {
-            Matcher mLegacy = rLegacy.matcher(s);
             Matcher m = r.matcher(s);
-            if (mLegacy.matches()) {
-                BHTAPI.addSource(new HurtSourceInfo(mLegacy.group(1), Integer.parseInt(mLegacy.group(3))));
-                BHT.LOG.fatal("[Damage Frames Config] - String " + s + " uses the legacy source:stack:ticks format; please update it to source:ticks");
-            } else if (m.matches()) {
-                BHTAPI.addSource(new HurtSourceInfo(m.group(1), Integer.parseInt(m.group(2))));
+            if (m.matches()) {
+                RuntimeData.DAMAGE_SOURCE_TIMES.put(m.group(1), Integer.parseInt(m.group(2)));
             } else {
                 BHT.LOG.warn("[Damage Frames Config] - String " + s + " is not a valid format");
             }

@@ -2,11 +2,11 @@ package arekkuusu.betterhurttimer.api.capability.data;
 
 public class HurtSourceData {
 
-    public final HurtSourceInfo info;
+    public final int waitTime;
     private long lastHurtTick = Long.MIN_VALUE;
 
-    public HurtSourceData(HurtSourceInfo info) {
-        this.info = info;
+    public HurtSourceData(int waitTime) {
+        this.waitTime = waitTime;
     }
 
     public boolean hasTriggered() {
@@ -14,7 +14,7 @@ public class HurtSourceData {
     }
 
     public boolean canApply(long worldTime) {
-        return !this.hasTriggered() || worldTime - this.lastHurtTick > this.info.waitTime;
+        return !this.hasTriggered() || worldTime - this.lastHurtTick > this.waitTime;
     }
 
     public void trigger(long worldTime) {

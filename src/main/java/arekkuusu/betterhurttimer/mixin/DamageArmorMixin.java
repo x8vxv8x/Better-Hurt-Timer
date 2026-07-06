@@ -18,11 +18,11 @@ public abstract class DamageArmorMixin {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
-            if (capability.shieldDamageCooldownUntil > worldTime) {
+            if (!capability.canDamageShield(worldTime)) {
                 return;
             } else {
                 damageShield(damage);
-                capability.shieldDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.shieldResistantTime;
+                capability.markShieldDamaged(worldTime, BHTConfig.CONFIG.damageFrames.shieldResistantTime);
             }
         } else {
             damageShield(damage);
@@ -34,11 +34,11 @@ public abstract class DamageArmorMixin {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
-            if (capability.armorDamageCooldownUntil > worldTime) {
+            if (!capability.canDamageArmor(worldTime)) {
                 return;
             } else {
                 damageArmor(damage);
-                capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
+                capability.markArmorDamaged(worldTime, BHTConfig.CONFIG.damageFrames.armorResistantTime);
             }
         } else {
             damageArmor(damage);

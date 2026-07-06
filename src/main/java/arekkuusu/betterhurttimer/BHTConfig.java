@@ -49,35 +49,35 @@ public class BHTConfig {
             public int nonDirectDamageResistantTime = 10;
             @Config.Comment("Damage sources that need a specific iFrame." +
                     "\n# Used only when useVanillaNonDirectDamageFrames is false." +
-                    "\n\nFormat: [*Damage Source name (Regex)]:[*iFrame time]" +
+                    "\n\nFormat: [*Damage Source name]:[*iFrame time]" +
                     "\n* Damage Source name -> Used to identify the type of damage you're receiving." +
                     "\n* iFrame time -> How often you can receive damage from this damage source." +
                     "\n\n\nExamples:" +
-                    "\n- ^inFire$:10 -> Source 'inFire' only allows hits every 10 game ticks." +
-                    "\n- ^(inFire|lava)$:10 -> Sources 'inFire' or 'lava' share the same 10 tick iFrame." +
-                    "\n- ^fall$:0 -> Source 'fall' has no additional iFrame." +
+                    "\n- inFire:10 -> Source 'inFire' only allows hits every 10 game ticks." +
+                    "\n- lava:10 -> Source 'lava' only allows hits every 10 game ticks." +
+                    "\n- fall:0 -> Source 'fall' has no additional iFrame." +
                     "\n")
             public String[] damageSource = {
-                    "^inFire$:10",
-                    "^onFire:10",
-                    "^lightningBolt$:10",
-                    "^lava$:10",
-                    "^hotFloor$:10",
-                    "^inWall$:10",
-                    "^cramming$:10",
-                    "^cactus$:10",
-                    "^fall$:0",
-                    "^flyIntoWall$:0",
-                    "^outOfWorld$:10",
-                    "^generic$:5",
-                    "^magic$:10",
-                    "^wither$:10",
-                    "^anvil$:10",
-                    "^fallingBlock$:10",
-                    "^dragonBreath$:10",
-                    "^indirectMagic$:10",
-                    "^thorns$:5",
-                    "^explosion\\.player$:5"
+                    "inFire:10",
+                    "onFire:10",
+                    "lightningBolt:10",
+                    "lava:10",
+                    "hotFloor:10",
+                    "inWall:10",
+                    "cramming:10",
+                    "cactus:10",
+                    "fall:0",
+                    "flyIntoWall:0",
+                    "outOfWorld:10",
+                    "generic:5",
+                    "magic:10",
+                    "wither:10",
+                    "anvil:10",
+                    "fallingBlock:10",
+                    "dragonBreath:10",
+                    "indirectMagic:10",
+                    "thorns:5",
+                    "explosion.player:5"
             };
         }
 

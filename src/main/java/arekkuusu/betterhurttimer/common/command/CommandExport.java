@@ -1,8 +1,7 @@
 package arekkuusu.betterhurttimer.common.command;
 
 import arekkuusu.betterhurttimer.BHT;
-import arekkuusu.betterhurttimer.api.BHTAPI;
-import arekkuusu.betterhurttimer.api.capability.data.HurtSourceInfo;
+import arekkuusu.betterhurttimer.common.RuntimeData;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -71,13 +70,12 @@ public class CommandExport extends CommandBase {
                 FileWriter export = new FileWriter(exportFile);
                 switch (args[0]) {
                     case "damageFrames":
-                        for (Map.Entry<CharSequence, HurtSourceInfo> entry : BHTAPI.DAMAGE_SOURCE_INFO_MAP.entrySet()) {
-                            HurtSourceInfo hurtSourceInfo = entry.getValue();
-                            export.write(hurtSourceInfo.sourceName + ":" + hurtSourceInfo.waitTime + "\n");
+                        for (Map.Entry<String, Integer> entry : RuntimeData.DAMAGE_SOURCE_TIMES.entrySet()) {
+                            export.write(entry.getKey() + ":" + entry.getValue() + "\n");
                         }
                         break;
                     case "attackFrames":
-                        for (Map.Entry<ResourceLocation, Double> entry : BHTAPI.ATTACK_THRESHOLD_MAP.entrySet()) {
+                        for (Map.Entry<ResourceLocation, Double> entry : RuntimeData.ATTACK_THRESHOLDS.entrySet()) {
                             ResourceLocation location = entry.getKey();
                             Double timer = entry.getValue();
                             export.write(location.toString() + ":" + timer + "\n");

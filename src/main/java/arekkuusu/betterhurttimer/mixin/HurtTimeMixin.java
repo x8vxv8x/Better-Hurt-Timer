@@ -46,10 +46,7 @@ public abstract class HurtTimeMixin extends Entity {
             Entity attacker = this.preDamageSource.getTrueSource();
             if (capability != null && attacker != null) {
                 long worldTime = target.world.getTotalWorldTime();
-                if (capability.currentDirectHitTick != worldTime) {
-                    return target.hurtResistantTime;
-                }
-                if (!capability.currentDirectAttackers.contains(attacker.getEntityId())) {
+                if (capability.canBypassDirectIFrames(worldTime, attacker.getEntityId())) {
                     return 0;
                 }
             }
@@ -68,11 +65,7 @@ public abstract class HurtTimeMixin extends Entity {
             Entity attacker = source.getTrueSource();
             if (capability != null && attacker != null) {
                 long worldTime = this.world.getTotalWorldTime();
-                if (capability.currentDirectHitTick != worldTime) {
-                    capability.currentDirectHitTick = worldTime;
-                    capability.currentDirectAttackers.clear();
-                }
-                capability.currentDirectAttackers.add(attacker.getEntityId());
+                capability.markDirectHit(worldTime, attacker.getEntityId());
             }
         }
         this.hurtResistantTime = hurtResistantTime;

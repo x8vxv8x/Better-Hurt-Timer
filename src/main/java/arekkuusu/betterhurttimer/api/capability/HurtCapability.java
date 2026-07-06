@@ -1,7 +1,7 @@
 package arekkuusu.betterhurttimer.api.capability;
 
 import arekkuusu.betterhurttimer.BHT;
-import arekkuusu.betterhurttimer.api.BHTAPI;
+import arekkuusu.betterhurttimer.common.RuntimeData;
 import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -27,15 +27,65 @@ import java.util.Set;
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
 
-    public Object2ObjectMap<CharSequence, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
-    public long armorDamageCooldownUntil = Long.MIN_VALUE;
-    public long shieldDamageCooldownUntil = Long.MIN_VALUE;
-    public long lastDirectAttackTick = Long.MIN_VALUE;
-    public long currentAttackAttemptTick = Long.MIN_VALUE;
-    public int currentAttackAttemptMarker = Integer.MIN_VALUE;
-    public boolean currentAttackAttemptAllowed;
-    public long currentDirectHitTick = Long.MIN_VALUE;
-    public final Set<Integer> currentDirectAttackers = new HashSet<>();
+    private final Object2ObjectMap<String, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
+    private long armorDamageCooldownUntil = Long.MIN_VALUE;
+    private long shieldDamageCooldownUntil = Long.MIN_VALUE;
+    private long lastDirectAttackTick = Long.MIN_VALUE;
+    private long currentAttackAttemptTick = Long.MIN_VALUE;
+    private int currentAttackAttemptMarker = Integer.MIN_VALUE;
+    private boolean currentAttackAttemptAllowed;
+    private long currentDirectHitTick = Long.MIN_VALUE;
+    private final Set<Integer> currentDirectAttackers = new HashSet<>();
+
+    public HurtSourceData sourceData(String damageType, int waitTime) {
+        return this.hurtMap.computeIfAbsent(damageType, ignored -> new HurtSourceData(waitTime));
+    }
+
+    public boolean canDamageArmor(long worldTime) {
+        return this.armorDamageCooldownUntil <= worldTime;
+    }
+
+    public void markArmorDamaged(long worldTime, int cooldown) {
+        this.armorDamageCooldownUntil = worldTime + cooldown;
+    }
+
+    public boolean canDamageShield(long worldTime) {
+        return this.shieldDamageCooldownUntil <= worldTime;
+    }
+
+    public void markShieldDamaged(long worldTime, int cooldown) {
+        this.shieldDamageCooldownUntil = worldTime + cooldown;
+    }
+
+    public boolean allowDirectAttackAttempt(long worldTime, int attackMarker, int cooldown) {
+        if (this.currentAttackAttemptTick == worldTime && this.currentAttackAttemptMarker == attackMarker) {
+            return this.currentAttackAttemptAllowed;
+        }
+
+        int ticksSinceLastAttack = this.lastDirectAttackTick == Long.MIN_VALUE ?
+                Integer.MAX_VALUE :
+                (int) Math.min(Integer.MAX_VALUE, Math.max(0L, worldTime - this.lastDirectAttackTick));
+        boolean allowed = ticksSinceLastAttack >= cooldown;
+        this.currentAttackAttemptTick = worldTime;
+        this.currentAttackAttemptMarker = attackMarker;
+        this.currentAttackAttemptAllowed = allowed;
+        if (allowed) {
+            this.lastDirectAttackTick = worldTime;
+        }
+        return allowed;
+    }
+
+    public boolean canBypassDirectIFrames(long worldTime, int attackerId) {
+        return this.currentDirectHitTick == worldTime && !this.currentDirectAttackers.contains(attackerId);
+    }
+
+    public void markDirectHit(long worldTime, int attackerId) {
+        if (this.currentDirectHitTick != worldTime) {
+            this.currentDirectHitTick = worldTime;
+            this.currentDirectAttackers.clear();
+        }
+        this.currentDirectAttackers.add(attackerId);
+    }
 
     public static void init() {
         CapabilityManager.INSTANCE.register(HurtCapability.class, new HurtCapability(), HurtCapability::new);
@@ -92,7 +142,7 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
             if (event.getObject() instanceof EntityLivingBase) {
                 event.addCapability(KEY, Capabilities.HURT_LIMITER.getDefaultInstance());
                 try {
-                    BHTAPI.field.setInt(((EntityLivingBase) event.getObject()), -1);
+                    RuntimeData.TICKS_SINCE_LAST_SWING.setInt(((EntityLivingBase) event.getObject()), -1);
                 } catch(Exception ignored) {
                 }
             }

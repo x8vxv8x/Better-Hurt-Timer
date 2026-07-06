@@ -13,7 +13,6 @@ import java.util.Set;
 public class MixinPlugin implements IMixinConfigPlugin {
 
     private static final Set<String> CONFIG_DISABLED_MIXINS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "AttackEntityMixin",
             "DamageArmorMixin",
             "DamageArmorMixinBukkit",
             "DamageArmorMixinOverride",

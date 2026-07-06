@@ -2,13 +2,10 @@ package arekkuusu.betterhurttimer.common;
 
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.BHTConfig;
-import arekkuusu.betterhurttimer.api.BHTAPI;
 import arekkuusu.betterhurttimer.api.capability.Capabilities;
 import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
-import arekkuusu.betterhurttimer.api.event.PreLivingAttackEvent;
 import arekkuusu.betterhurttimer.api.event.PreLivingKnockBackEvent;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -45,16 +42,17 @@ public class Events {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onAttackEntityFromPre(PreLivingAttackEvent event) {
+    public static void onNonDirectAttack(LivingAttackEvent event) {
         if (isClientWorld(event.getEntityLiving())) return;
+        if (event.getAmount() <= 0) return;
 
         DamageSource source = event.getSource();
         EntityLivingBase entity = event.getEntityLiving();
         if (Events.isDirectAttack(source)) return;
 
         Optional<HurtSourceData> optional = BHTConfig.CONFIG.damageFrames.useVanillaNonDirectDamageFrames ?
-                BHTAPI.getFixed(entity, source, BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime) :
-                BHTAPI.get(entity, source);
+                RuntimeData.getFixedSource(entity, source, BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime) :
+                RuntimeData.getConfiguredSource(entity, source);
         long worldTime = entity.world.getTotalWorldTime();
 
         if (!optional.isPresent()) return;
@@ -74,9 +72,9 @@ public class Events {
 
         DamageSource source = event.getSource();
 
-        if (!Events.isAttack(source) && !BHTAPI.isCustom(source.getImmediateSource())) return;
-        if (source instanceof EntityDamageSourceIndirect && !BHTAPI.isCustom(source.getImmediateSource())) return;
-        if (!(source.getImmediateSource() instanceof EntityLivingBase) && !BHTAPI.isCustom(source.getImmediateSource())) return;
+        if (!Events.isAttack(source) && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
+        if (source instanceof EntityDamageSourceIndirect && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
+        if (!(source.getImmediateSource() instanceof EntityLivingBase) && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
 
         Entity target = event.getEntity();
         Entity attacker = source.getImmediateSource();
@@ -86,26 +84,7 @@ public class Events {
         Capabilities.hurt(attacker).ifPresent(capability -> {
             long worldTime = event.getEntity().world.getTotalWorldTime();
             int attackAttemptMarker = Events.getAttackAttemptMarker(attacker);
-            boolean sameAttempt = capability.currentAttackAttemptTick == worldTime &&
-                    capability.currentAttackAttemptMarker == attackAttemptMarker;
-
-            if (sameAttempt) {
-                if (!capability.currentAttackAttemptAllowed) {
-                    event.setCanceled(true);
-                }
-                return;
-            }
-
-            int ticksSinceLastAttack = capability.lastDirectAttackTick == Long.MIN_VALUE ?
-                    Integer.MAX_VALUE :
-                    (int) Math.min(Integer.MAX_VALUE, Math.max(0L, worldTime - capability.lastDirectAttackTick));
-            boolean allowed = ticksSinceLastAttack >= attackCooldown;
-            capability.currentAttackAttemptTick = worldTime;
-            capability.currentAttackAttemptMarker = attackAttemptMarker;
-            capability.currentAttackAttemptAllowed = allowed;
-            if (allowed) {
-                capability.lastDirectAttackTick = worldTime;
-            } else {
+            if (!capability.allowDirectAttackAttempt(worldTime, attackAttemptMarker, attackCooldown)) {
                 event.setCanceled(true);
             }
         });
@@ -128,7 +107,7 @@ public class Events {
     public static int getAttackAttemptMarker(Entity attacker) {
         if (attacker instanceof EntityLivingBase && Events.canSwing((EntityLivingBase) attacker)) {
             try {
-                return BHTAPI.field.getInt(attacker);
+                return RuntimeData.TICKS_SINCE_LAST_SWING.getInt(attacker);
             } catch (Exception ignored) {
             }
         }
@@ -140,7 +119,7 @@ public class Events {
         Item item = stack.getItem();
         boolean canSwing = false;
         try {
-            canSwing = BHTAPI.field.getInt(entity) >= 0 && item.getAttributeModifiers(
+            canSwing = RuntimeData.TICKS_SINCE_LAST_SWING.getInt(entity) >= 0 && item.getAttributeModifiers(
                     EntityEquipmentSlot.MAINHAND,
                     stack
             ).containsKey(SharedMonsterAttributes.ATTACK_SPEED.getName());
@@ -177,16 +156,16 @@ public class Events {
     public static double getThreshold(Entity entity) {
         if (entity instanceof EntityLivingBase) {
             ResourceLocation itemLocation = ((EntityLivingBase) entity).getHeldItemMainhand().getItem().getRegistryName();
-            if (BHTAPI.ATTACK_ITEM_THRESHOLD_MAP.containsKey(itemLocation)) {
-                return BHTAPI.ATTACK_ITEM_THRESHOLD_MAP.get(itemLocation);
+            if (RuntimeData.ATTACK_ITEM_THRESHOLDS.containsKey(itemLocation)) {
+                return RuntimeData.ATTACK_ITEM_THRESHOLDS.get(itemLocation);
             }
         }
-        ResourceLocation location = EntityList.getKey(entity.getClass());
+        ResourceLocation location = RuntimeData.getEntityLocation(entity);
         double threshold = BHTConfig.CONFIG.attackFrames.attackThresholdDefault;
         if (entity instanceof EntityPlayer)
             threshold = BHTConfig.CONFIG.attackFrames.attackThresholdPlayer;
-        if (location != null && BHTAPI.ATTACK_THRESHOLD_MAP.containsKey(location))
-            threshold = BHTAPI.ATTACK_THRESHOLD_MAP.get(location);
+        if (location != null && RuntimeData.ATTACK_THRESHOLDS.containsKey(location))
+            threshold = RuntimeData.ATTACK_THRESHOLDS.get(location);
         return threshold;
     }
 
@@ -198,7 +177,7 @@ public class Events {
         if (source == null || source instanceof EntityDamageSourceIndirect) {
             return false;
         }
-        return Events.isAttack(source) || BHTAPI.isCustom(source.getImmediateSource());
+        return Events.isAttack(source) || RuntimeData.hasCustomAttackThreshold(source.getImmediateSource());
     }
 
     @SubscribeEvent()

@@ -19,11 +19,11 @@ public abstract class DamageSpecialArmorMixin {
         HurtCapability capability = Capabilities.hurt(entity).orElse(null);
         if (capability != null) {
             long worldTime = entity.world.getTotalWorldTime();
-            if (capability.armorDamageCooldownUntil > worldTime) {
+            if (!capability.canDamageArmor(worldTime)) {
                 return;
             }
             armor.damageArmor(entity, stack, source, damage, slot);
-            capability.armorDamageCooldownUntil = worldTime + BHTConfig.CONFIG.damageFrames.armorResistantTime;
+            capability.markArmorDamaged(worldTime, BHTConfig.CONFIG.damageFrames.armorResistantTime);
             return;
         }
         armor.damageArmor(entity, stack, source, damage, slot);
