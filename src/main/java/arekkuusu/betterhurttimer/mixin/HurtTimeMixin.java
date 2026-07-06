@@ -8,6 +8,7 @@ import arekkuusu.betterhurttimer.api.capability.data.AttackInfo;
 import arekkuusu.betterhurttimer.common.Events;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -58,7 +59,11 @@ public abstract class HurtTimeMixin extends Entity {
 
     @Inject(method = "attackEntityFrom(Lnet/minecraft/util/DamageSource;F)Z", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/EntityLivingBase;hurtTime:I", shift = At.Shift.AFTER))
     public void hurtResistantTime(DamageSource source, float amount, CallbackInfoReturnable<Boolean> info) {
-        this.hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTime;
+        int hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTime;
+        if ((Object) this instanceof EntityPlayer && BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer >= 0) {
+            hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer;
+        }
+        this.hurtResistantTime = hurtResistantTime;
         if (this.preHurtTime > 0) {
             this.hurtTime = this.preHurtTime;
         }

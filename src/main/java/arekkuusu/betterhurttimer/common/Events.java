@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -41,7 +42,7 @@ public class Events {
     public static void onNonLivingEntityUpdate(TickEvent.WorldTickEvent event) {
         if (event.world.isRemote) return;
 
-        for (Entity entity : event.world.loadedEntityList) {
+        for (Entity entity : new ArrayList<>(event.world.loadedEntityList)) {
             Capabilities.hurt(entity).ifPresent(capability -> {
                 //Source Damage i-Frames
                 if (!capability.hurtMap.isEmpty()) {
@@ -178,6 +179,9 @@ public class Events {
     }
 
     public static double getHurtResistantTime(Entity entity) {
+        if (entity instanceof EntityPlayer && BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer >= 0) {
+            return BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer;
+        }
         return entity instanceof EntityLivingBase ?
                 ((EntityLivingBase) entity).maxHurtResistantTime
                 : Events.maxHurtResistantTime;

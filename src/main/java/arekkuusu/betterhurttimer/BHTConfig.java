@@ -31,6 +31,9 @@ public class BHTConfig {
             @Config.Comment("Default value replacing vanilla's iFrame after being hurt")
             @Config.RangeInt(min = 0)
             public int hurtResistantTime = 0;
+            @Config.Comment("Player-only value replacing vanilla's iFrame after being hurt. Set to -1 to use the default hurtResistantTime value.")
+            @Config.RangeInt(min = -1)
+            public int hurtResistantTimePlayer = -1;
             @Config.Comment("Default value replacing vanilla's iFrame after armor damage." +
                     "\n# Used mainly to prevent armor from wearing down too fast" +
                     "\n# If the next attack deals more than the previous the difference is applied")
