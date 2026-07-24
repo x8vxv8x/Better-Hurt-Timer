@@ -2,6 +2,7 @@ package arekkuusu.betterhurttimer.common;
 
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.BHTConfig;
+import arekkuusu.betterhurttimer.api.BetterHurtTimerApi;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.api.event.PreLivingKnockBackEvent;
 import net.minecraft.entity.Entity;
@@ -71,6 +72,14 @@ public class Events {
         DamageSource source = event.getSource();
 
         Entity attacker = source.getImmediateSource();
+        BetterHurtTimerApi.DirectAttackContext context = BetterHurtTimerApi.getActiveDirectAttack(attacker, event.getEntityLiving());
+        if (context != null) {
+            if (!context.isAllowed()) {
+                event.setCanceled(true);
+            }
+            return;
+        }
+
         boolean hasCustom = RuntimeData.hasCustomAttackThreshold(attacker);
 
         if (!hasCustom) {
@@ -168,6 +177,9 @@ public class Events {
     public static boolean isDirectAttack(DamageSource source) {
         if (source == null || source instanceof EntityDamageSourceIndirect) {
             return false;
+        }
+        if (BetterHurtTimerApi.getActiveDirectAttack(source.getImmediateSource(), null) != null) {
+            return true;
         }
         return Events.isAttack(source) || RuntimeData.hasCustomAttackThreshold(source.getImmediateSource());
     }

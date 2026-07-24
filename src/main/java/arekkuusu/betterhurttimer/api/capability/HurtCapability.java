@@ -1,9 +1,8 @@
 package arekkuusu.betterhurttimer.api.capability;
 
+import arekkuusu.betterhurttimer.api.BetterHurtTimerApi;
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.common.RuntimeData;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.entity.Entity;
@@ -23,7 +22,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
@@ -32,16 +33,18 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     public static final Capability<HurtCapability> CAPABILITY = null;
 
     private final Object2LongMap<String> hurtMap = new Object2LongArrayMap<>();
+    private final Object2LongMap<String> directAttackMap = new Object2LongArrayMap<>();
     private long shieldDamageCooldownUntil = Long.MIN_VALUE;
-    private long lastDirectAttackTick = Long.MIN_VALUE;
     private long currentAttackAttemptTick = Long.MIN_VALUE;
+    private String currentAttackAttemptChannel = BetterHurtTimerApi.DEFAULT_DIRECT_ATTACK_CHANNEL;
     private int currentAttackAttemptMarker = Integer.MIN_VALUE;
     private boolean currentAttackAttemptAllowed;
     private long currentDirectHitTick = Long.MIN_VALUE;
-    private final IntSet currentDirectAttackers = new IntOpenHashSet();
+    private final Set<String> currentDirectAttackers = new HashSet<>();
 
     public HurtCapability() {
         this.hurtMap.defaultReturnValue(Long.MIN_VALUE);
+        this.directAttackMap.defaultReturnValue(Long.MIN_VALUE);
     }
 
     public boolean allowSourceDamage(String damageType, long serverTick, int waitTime) {
@@ -62,33 +65,54 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     }
 
     public boolean allowDirectAttackAttempt(long serverTick, int attackMarker, int cooldown) {
-        if (this.currentAttackAttemptTick == serverTick && this.currentAttackAttemptMarker == attackMarker) {
+        return allowDirectAttackAttempt(BetterHurtTimerApi.DEFAULT_DIRECT_ATTACK_CHANNEL, serverTick, attackMarker, cooldown);
+    }
+
+    public boolean allowDirectAttackAttempt(String channel, long serverTick, int attackMarker, int cooldown) {
+        String normalizedChannel = BetterHurtTimerApi.normalizeChannel(channel);
+        if (this.currentAttackAttemptTick == serverTick
+                && this.currentAttackAttemptMarker == attackMarker
+                && this.currentAttackAttemptChannel.equals(normalizedChannel)) {
             return this.currentAttackAttemptAllowed;
         }
 
-        int ticksSinceLastAttack = this.lastDirectAttackTick == Long.MIN_VALUE ?
+        long lastDirectAttackTick = this.directAttackMap.getLong(normalizedChannel);
+        int ticksSinceLastAttack = lastDirectAttackTick == Long.MIN_VALUE ?
                 Integer.MAX_VALUE :
-                (int) Math.min(Integer.MAX_VALUE, Math.max(0L, serverTick - this.lastDirectAttackTick));
+                (int) Math.min(Integer.MAX_VALUE, Math.max(0L, serverTick - lastDirectAttackTick));
         boolean allowed = ticksSinceLastAttack >= cooldown;
         this.currentAttackAttemptTick = serverTick;
+        this.currentAttackAttemptChannel = normalizedChannel;
         this.currentAttackAttemptMarker = attackMarker;
         this.currentAttackAttemptAllowed = allowed;
         if (allowed) {
-            this.lastDirectAttackTick = serverTick;
+            this.directAttackMap.put(normalizedChannel, serverTick);
         }
         return allowed;
     }
 
     public boolean canBypassDirectIFrames(long serverTick, int attackerId) {
-        return this.currentDirectHitTick == serverTick && !this.currentDirectAttackers.contains(attackerId);
+        return canBypassDirectIFrames(serverTick, attackerId, BetterHurtTimerApi.DEFAULT_DIRECT_ATTACK_CHANNEL);
+    }
+
+    public boolean canBypassDirectIFrames(long serverTick, int attackerId, String channel) {
+        return this.currentDirectHitTick == serverTick && !this.currentDirectAttackers.contains(directHitKey(attackerId, channel));
     }
 
     public void markDirectHit(long serverTick, int attackerId) {
+        markDirectHit(serverTick, attackerId, BetterHurtTimerApi.DEFAULT_DIRECT_ATTACK_CHANNEL);
+    }
+
+    public void markDirectHit(long serverTick, int attackerId, String channel) {
         if (this.currentDirectHitTick != serverTick) {
             this.currentDirectHitTick = serverTick;
             this.currentDirectAttackers.clear();
         }
-        this.currentDirectAttackers.add(attackerId);
+        this.currentDirectAttackers.add(directHitKey(attackerId, channel));
+    }
+
+    private static String directHitKey(int attackerId, String channel) {
+        return attackerId + ":" + BetterHurtTimerApi.normalizeChannel(channel);
     }
 
     public static Optional<HurtCapability> get(@Nullable Entity entity) {

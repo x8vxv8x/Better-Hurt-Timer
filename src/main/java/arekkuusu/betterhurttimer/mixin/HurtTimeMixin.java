@@ -1,6 +1,7 @@
 package arekkuusu.betterhurttimer.mixin;
 
 import arekkuusu.betterhurttimer.BHTConfig;
+import arekkuusu.betterhurttimer.api.BetterHurtTimerApi;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.common.Events;
 import arekkuusu.betterhurttimer.common.RuntimeData;
@@ -46,7 +47,8 @@ public abstract class HurtTimeMixin extends Entity {
             Entity attacker = this.preDamageSource.getTrueSource();
             if (capability != null && attacker != null) {
                 long serverTick = RuntimeData.serverTick();
-                if (capability.canBypassDirectIFrames(serverTick, attacker.getEntityId())) {
+                String channel = BetterHurtTimerApi.getActiveDirectAttackChannel(attacker, target);
+                if (capability.canBypassDirectIFrames(serverTick, attacker.getEntityId(), channel)) {
                     return 0;
                 }
             }
@@ -65,7 +67,8 @@ public abstract class HurtTimeMixin extends Entity {
             Entity attacker = source.getTrueSource();
             if (capability != null && attacker != null) {
                 long serverTick = RuntimeData.serverTick();
-                capability.markDirectHit(serverTick, attacker.getEntityId());
+                String channel = BetterHurtTimerApi.getActiveDirectAttackChannel(attacker, this);
+                capability.markDirectHit(serverTick, attacker.getEntityId(), channel);
             }
         }
         this.hurtResistantTime = hurtResistantTime;
