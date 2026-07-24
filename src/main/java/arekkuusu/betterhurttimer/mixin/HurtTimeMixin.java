@@ -4,6 +4,7 @@ import arekkuusu.betterhurttimer.BHTConfig;
 import arekkuusu.betterhurttimer.api.capability.Capabilities;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.common.Events;
+import arekkuusu.betterhurttimer.common.RuntimeData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -45,8 +46,8 @@ public abstract class HurtTimeMixin extends Entity {
             HurtCapability capability = Capabilities.hurt(target).orElse(null);
             Entity attacker = this.preDamageSource.getTrueSource();
             if (capability != null && attacker != null) {
-                long worldTime = target.world.getTotalWorldTime();
-                if (capability.canBypassDirectIFrames(worldTime, attacker.getEntityId())) {
+                long serverTick = RuntimeData.serverTick();
+                if (capability.canBypassDirectIFrames(serverTick, attacker.getEntityId())) {
                     return 0;
                 }
             }
@@ -64,8 +65,8 @@ public abstract class HurtTimeMixin extends Entity {
             HurtCapability capability = Capabilities.hurt(this).orElse(null);
             Entity attacker = source.getTrueSource();
             if (capability != null && attacker != null) {
-                long worldTime = this.world.getTotalWorldTime();
-                capability.markDirectHit(worldTime, attacker.getEntityId());
+                long serverTick = RuntimeData.serverTick();
+                capability.markDirectHit(serverTick, attacker.getEntityId());
             }
         }
         this.hurtResistantTime = hurtResistantTime;
@@ -100,3 +101,4 @@ public abstract class HurtTimeMixin extends Entity {
     @Shadow
     protected abstract void playHurtSound(DamageSource source);
 }
+

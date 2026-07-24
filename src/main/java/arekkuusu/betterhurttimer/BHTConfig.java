@@ -33,11 +33,7 @@ public class BHTConfig {
             public int hurtResistantTime = 0;
             @Config.Comment("Player-only value replacing vanilla's iFrame after being hurt. Set to -1 to use the default hurtResistantTime value.")
             @Config.RangeInt(min = -1)
-            public int hurtResistantTimePlayer = -1;
-            @Config.Comment("Default value replacing vanilla's iFrame after armor damage." +
-                    "\n# Used mainly to prevent armor from wearing down too fast")
-            @Config.RangeInt(min = 0)
-            public int armorResistantTime = 5;
+            public int hurtResistantTimePlayer = 10;
             @Config.Comment("Default value replacing vanilla's iFrame after shield damage." +
                     "\n# Used mainly to prevent shield from wearing down too fast")
             @Config.RangeInt(min = 0)
@@ -142,9 +138,6 @@ public class BHTConfig {
 
         public static class Rendering {
             public boolean doHurtCameraEffect = true;
-            public boolean showDamageParticles = true;
-            public int damageColor = 0xFF0000;
-            public int healColor = 0x00FF00;
         }
     }
 

@@ -53,13 +53,13 @@ public class Events {
         Optional<HurtSourceData> optional = BHTConfig.CONFIG.damageFrames.useVanillaNonDirectDamageFrames ?
                 RuntimeData.getFixedSource(entity, source, BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime) :
                 RuntimeData.getConfiguredSource(entity, source);
-        long worldTime = entity.world.getTotalWorldTime();
+        long serverTick = RuntimeData.serverTick();
 
         if (!optional.isPresent()) return;
 
         HurtSourceData data = optional.orElseThrow(UnsupportedOperationException::new);
-        if (data.canApply(worldTime)) {
-            data.trigger(worldTime);
+        if (data.canApply(serverTick)) {
+            data.trigger(serverTick);
             return;
         }
         event.setCanceled(true);
@@ -82,9 +82,9 @@ public class Events {
         if (attackCooldown <= 0) return;
 
         Capabilities.hurt(attacker).ifPresent(capability -> {
-            long worldTime = event.getEntity().world.getTotalWorldTime();
+            long serverTick = RuntimeData.serverTick();
             int attackAttemptMarker = Events.getAttackAttemptMarker(attacker);
-            if (!capability.allowDirectAttackAttempt(worldTime, attackAttemptMarker, attackCooldown)) {
+            if (!capability.allowDirectAttackAttempt(serverTick, attackAttemptMarker, attackCooldown)) {
                 event.setCanceled(true);
             }
         });
@@ -192,3 +192,4 @@ public class Events {
         return entity.getEntityWorld().isRemote;
     }
 }
+

@@ -28,7 +28,6 @@ import java.util.Set;
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
 
     private final Object2ObjectMap<String, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
-    private long armorDamageCooldownUntil = Long.MIN_VALUE;
     private long shieldDamageCooldownUntil = Long.MIN_VALUE;
     private long lastDirectAttackTick = Long.MIN_VALUE;
     private long currentAttackAttemptTick = Long.MIN_VALUE;
@@ -41,47 +40,39 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
         return this.hurtMap.computeIfAbsent(damageType, ignored -> new HurtSourceData(waitTime));
     }
 
-    public boolean canDamageArmor(long worldTime) {
-        return this.armorDamageCooldownUntil <= worldTime;
+    public boolean canDamageShield(long serverTick) {
+        return this.shieldDamageCooldownUntil <= serverTick;
     }
 
-    public void markArmorDamaged(long worldTime, int cooldown) {
-        this.armorDamageCooldownUntil = worldTime + cooldown;
+    public void markShieldDamaged(long serverTick, int cooldown) {
+        this.shieldDamageCooldownUntil = serverTick + cooldown;
     }
 
-    public boolean canDamageShield(long worldTime) {
-        return this.shieldDamageCooldownUntil <= worldTime;
-    }
-
-    public void markShieldDamaged(long worldTime, int cooldown) {
-        this.shieldDamageCooldownUntil = worldTime + cooldown;
-    }
-
-    public boolean allowDirectAttackAttempt(long worldTime, int attackMarker, int cooldown) {
-        if (this.currentAttackAttemptTick == worldTime && this.currentAttackAttemptMarker == attackMarker) {
+    public boolean allowDirectAttackAttempt(long serverTick, int attackMarker, int cooldown) {
+        if (this.currentAttackAttemptTick == serverTick && this.currentAttackAttemptMarker == attackMarker) {
             return this.currentAttackAttemptAllowed;
         }
 
         int ticksSinceLastAttack = this.lastDirectAttackTick == Long.MIN_VALUE ?
                 Integer.MAX_VALUE :
-                (int) Math.min(Integer.MAX_VALUE, Math.max(0L, worldTime - this.lastDirectAttackTick));
+                (int) Math.min(Integer.MAX_VALUE, Math.max(0L, serverTick - this.lastDirectAttackTick));
         boolean allowed = ticksSinceLastAttack >= cooldown;
-        this.currentAttackAttemptTick = worldTime;
+        this.currentAttackAttemptTick = serverTick;
         this.currentAttackAttemptMarker = attackMarker;
         this.currentAttackAttemptAllowed = allowed;
         if (allowed) {
-            this.lastDirectAttackTick = worldTime;
+            this.lastDirectAttackTick = serverTick;
         }
         return allowed;
     }
 
-    public boolean canBypassDirectIFrames(long worldTime, int attackerId) {
-        return this.currentDirectHitTick == worldTime && !this.currentDirectAttackers.contains(attackerId);
+    public boolean canBypassDirectIFrames(long serverTick, int attackerId) {
+        return this.currentDirectHitTick == serverTick && !this.currentDirectAttackers.contains(attackerId);
     }
 
-    public void markDirectHit(long worldTime, int attackerId) {
-        if (this.currentDirectHitTick != worldTime) {
-            this.currentDirectHitTick = worldTime;
+    public void markDirectHit(long serverTick, int attackerId) {
+        if (this.currentDirectHitTick != serverTick) {
+            this.currentDirectHitTick = serverTick;
             this.currentDirectAttackers.clear();
         }
         this.currentDirectAttackers.add(attackerId);
@@ -113,26 +104,16 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
         Capabilities.HURT_LIMITER.getStorage().readNBT(Capabilities.HURT_LIMITER, this, null, nbt);
     }
 
-    //** NBT **//
-    public static final String LAST_ARMOR_TIMER_NBT = "armorDamageCooldownUntil";
-    public static final String LAST_SHIELD_TIMER_NBT = "shieldDamageCooldownUntil";
-
     @Override
     @Nullable
     public NBTBase writeNBT(Capability<HurtCapability> capability, HurtCapability instance, EnumFacing side) {
-        NBTTagCompound tag = new NBTTagCompound();
-        tag.setLong(LAST_ARMOR_TIMER_NBT, instance.armorDamageCooldownUntil);
-        tag.setLong(LAST_SHIELD_TIMER_NBT, instance.shieldDamageCooldownUntil);
-        return tag;
+        return new NBTTagCompound();
     }
 
     @Override
     public void readNBT(Capability<HurtCapability> capability, HurtCapability instance, EnumFacing side, NBTBase nbt) {
-        NBTTagCompound tag = (NBTTagCompound) nbt;
-        instance.armorDamageCooldownUntil = tag.hasKey(LAST_ARMOR_TIMER_NBT) ? tag.getLong(LAST_ARMOR_TIMER_NBT) : tag.getInteger(LAST_ARMOR_TIMER_NBT);
-        instance.shieldDamageCooldownUntil = tag.hasKey(LAST_SHIELD_TIMER_NBT) ? tag.getLong(LAST_SHIELD_TIMER_NBT) : tag.getInteger(LAST_SHIELD_TIMER_NBT);
+        instance.shieldDamageCooldownUntil = Long.MIN_VALUE;
     }
-    //** NBT **//
 
     public static class Handler {
         private static final ResourceLocation KEY = new ResourceLocation(BHT.MOD_ID, "HURT");
@@ -155,3 +136,5 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
         }
     }
 }
+
+

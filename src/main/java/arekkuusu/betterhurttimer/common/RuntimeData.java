@@ -1,13 +1,15 @@
 package arekkuusu.betterhurttimer.common;
 
 import arekkuusu.betterhurttimer.api.capability.Capabilities;
-import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 
@@ -24,6 +26,9 @@ public final class RuntimeData {
     public static final Map<ResourceLocation, Double> ATTACK_ITEM_THRESHOLDS = new LinkedHashMap<>();
 
     public static final Field TICKS_SINCE_LAST_SWING;
+    private static final ServerClock SERVER_CLOCK = new ServerClock();
+    private static boolean serverClockRegistered;
+    private static long serverTick;
 
     static {
         TICKS_SINCE_LAST_SWING = ObfuscationReflectionHelper.findField(EntityLivingBase.class, "field_184617_aD");
@@ -31,6 +36,21 @@ public final class RuntimeData {
     }
 
     private RuntimeData() {
+    }
+
+    public static void initServerClock() {
+        if (!serverClockRegistered) {
+            MinecraftForge.EVENT_BUS.register(SERVER_CLOCK);
+            serverClockRegistered = true;
+        }
+    }
+
+    public static void resetServerTick() {
+        serverTick = 0L;
+    }
+
+    public static long serverTick() {
+        return serverTick;
     }
 
     public static boolean hasCustomAttackThreshold(@Nullable Entity entity) {
@@ -64,4 +84,15 @@ public final class RuntimeData {
     private static Optional<HurtSourceData> getSource(EntityLivingBase entity, String damageType, int waitTime) {
         return Capabilities.hurt(entity).map(capability -> capability.sourceData(damageType, waitTime));
     }
+
+    private static class ServerClock {
+        @SubscribeEvent
+        public void onServerTick(TickEvent.ServerTickEvent event) {
+            if (event.phase == TickEvent.Phase.START) {
+                serverTick++;
+            }
+        }
+    }
 }
+
+

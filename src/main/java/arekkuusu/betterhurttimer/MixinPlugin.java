@@ -13,11 +13,8 @@ import java.util.Set;
 public class MixinPlugin implements IMixinConfigPlugin {
 
     private static final Set<String> CONFIG_DISABLED_MIXINS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "DamageArmorMixin",
-            "DamageArmorMixinBukkit",
-            "DamageArmorMixinOverride",
-            "DamageSpecialArmorMixin",
-            "HurtAnimationMixin",
+            "DamageShieldMixin",
+            "DamageShieldMixinBukkit",
             "HurtCameraEffectMixin",
             "HurtTimeMixin",
             "KnockbackMixin"
@@ -45,12 +42,10 @@ public class MixinPlugin implements IMixinConfigPlugin {
         }
 
         switch (simpleName) {
-            case "DamageArmorMixin":
+            case "DamageShieldMixin":
                 return !hasClass("org.bukkit.plugin.Plugin");
-            case "DamageArmorMixinBukkit":
+            case "DamageShieldMixinBukkit":
                 return hasClass("org.bukkit.plugin.Plugin");
-            case "DamageArmorMixinOverride":
-                return hasClass("com.robertx22.mine_and_slash.mixins.LivingEntityMixin");
             default:
                 return true;
         }

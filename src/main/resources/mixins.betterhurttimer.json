@@ -7,16 +7,13 @@
 	"minVersion": "0.8.5",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"DamageArmorMixin",
-		"DamageArmorMixinBukkit",
-		"DamageArmorMixinOverride",
-		"DamageSpecialArmorMixin",
+		"DamageShieldMixin",
+		"DamageShieldMixinBukkit",
 		"HurtTimeMixin",
 		"KnockbackMixin"
 	],
 	"server": [],
 	"client": [
-		"HurtAnimationMixin",
 		"HurtCameraEffectMixin"
 	]
 }

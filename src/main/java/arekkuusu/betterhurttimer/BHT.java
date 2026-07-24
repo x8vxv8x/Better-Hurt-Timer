@@ -34,6 +34,7 @@ public class BHT {
 
     @EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+        RuntimeData.initServerClock();
         reloadRuntimeCaches();
     }
 
@@ -82,6 +83,7 @@ public class BHT {
 
     @EventHandler
     public void onServerLoad(FMLServerStartingEvent event) {
+        RuntimeData.resetServerTick();
         event.registerServerCommand(new CommandExport());
     }
 
@@ -90,3 +92,5 @@ public class BHT {
         LOG.warn("Invalid fingerprint detected!");
     }
 }
+
+

@@ -13,11 +13,12 @@ public class HurtSourceData {
         return this.lastHurtTick != Long.MIN_VALUE;
     }
 
-    public boolean canApply(long worldTime) {
-        return !this.hasTriggered() || worldTime - this.lastHurtTick > this.waitTime;
+    public boolean canApply(long serverTick) {
+        return !this.hasTriggered() || serverTick - this.lastHurtTick > this.waitTime;
     }
 
-    public void trigger(long worldTime) {
-        this.lastHurtTick = worldTime;
+    public void trigger(long serverTick) {
+        this.lastHurtTick = serverTick;
     }
 }
+
