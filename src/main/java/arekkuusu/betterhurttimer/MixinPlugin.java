@@ -14,7 +14,6 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
     private static final Set<String> CONFIG_DISABLED_MIXINS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "DamageShieldMixin",
-            "DamageShieldMixinBukkit",
             "HurtCameraEffectMixin",
             "HurtTimeMixin",
             "KnockbackMixin"
@@ -37,27 +36,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
         String simpleName = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
 
-        if (BHTConfig.CONFIG.attackFrames.turnOffMixins && CONFIG_DISABLED_MIXINS.contains(simpleName)) {
-            return false;
-        }
-
-        switch (simpleName) {
-            case "DamageShieldMixin":
-                return !hasClass("org.bukkit.plugin.Plugin");
-            case "DamageShieldMixinBukkit":
-                return hasClass("org.bukkit.plugin.Plugin");
-            default:
-                return true;
-        }
-    }
-
-    private boolean hasClass(String name) {
-        try {
-            Class.forName(name, false, getClass().getClassLoader());
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
+        return !BHTConfig.CONFIG.attackFrames.turnOffMixins || !CONFIG_DISABLED_MIXINS.contains(simpleName);
     }
 
     @Override

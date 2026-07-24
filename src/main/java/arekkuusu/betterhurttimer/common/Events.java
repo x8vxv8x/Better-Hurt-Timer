@@ -3,7 +3,6 @@ package arekkuusu.betterhurttimer.common;
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.BHTConfig;
 import arekkuusu.betterhurttimer.api.capability.Capabilities;
-import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
 import arekkuusu.betterhurttimer.api.event.PreLivingKnockBackEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -24,7 +23,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = BHT.MOD_ID)
@@ -50,19 +48,19 @@ public class Events {
         EntityLivingBase entity = event.getEntityLiving();
         if (Events.isDirectAttack(source)) return;
 
-        Optional<HurtSourceData> optional = BHTConfig.CONFIG.damageFrames.useVanillaNonDirectDamageFrames ?
-                RuntimeData.getFixedSource(entity, source, BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime) :
-                RuntimeData.getConfiguredSource(entity, source);
+        String damageType = source.getDamageType();
+        Integer waitTime = BHTConfig.CONFIG.damageFrames.useVanillaNonDirectDamageFrames ?
+                BHTConfig.CONFIG.damageFrames.nonDirectDamageResistantTime :
+                RuntimeData.DAMAGE_SOURCE_TIMES.get(damageType);
         long serverTick = RuntimeData.serverTick();
 
-        if (!optional.isPresent()) return;
+        if (waitTime == null) return;
 
-        HurtSourceData data = optional.orElseThrow(UnsupportedOperationException::new);
-        if (data.canApply(serverTick)) {
-            data.trigger(serverTick);
-            return;
-        }
-        event.setCanceled(true);
+        Capabilities.hurt(entity).ifPresent(capability -> {
+            if (!capability.allowSourceDamage(damageType, serverTick, waitTime)) {
+                event.setCanceled(true);
+            }
+        });
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -72,12 +70,15 @@ public class Events {
 
         DamageSource source = event.getSource();
 
-        if (!Events.isAttack(source) && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
-        if (source instanceof EntityDamageSourceIndirect && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
-        if (!(source.getImmediateSource() instanceof EntityLivingBase) && !RuntimeData.hasCustomAttackThreshold(source.getImmediateSource())) return;
-
-        Entity target = event.getEntity();
         Entity attacker = source.getImmediateSource();
+        boolean hasCustom = RuntimeData.hasCustomAttackThreshold(attacker);
+
+        if (!hasCustom) {
+            if (!Events.isAttack(source)) return;
+            if (source instanceof EntityDamageSourceIndirect) return;
+            if (!(attacker instanceof EntityLivingBase)) return;
+        }
+
         int attackCooldown = Events.getAttackCooldown(attacker);
         if (attackCooldown <= 0) return;
 
@@ -130,15 +131,6 @@ public class Events {
 
     public static double getCoolPeriod(EntityLivingBase entity) {
         return (1D / entity.getEntityAttribute(SharedMonsterAttributes.ATTACK_SPEED).getAttributeValue() * Events.maxHurtResistantTime);
-    }
-
-    public static double getHurtResistantTime(Entity entity) {
-        if (entity instanceof EntityPlayer && BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer >= 0) {
-            return BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer;
-        }
-        return entity instanceof EntityLivingBase ?
-                ((EntityLivingBase) entity).maxHurtResistantTime
-                : Events.maxHurtResistantTime;
     }
 
     public static double getAttackSpeed(Entity entity) {

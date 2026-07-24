@@ -54,7 +54,7 @@ public class BHT {
             if (m.matches()) {
                 RuntimeData.ATTACK_THRESHOLDS.put(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
             } else {
-                BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
+                BHT.LOG.warn("{} is not a valid format", "[Attack Frames Config] - String " + s);
             }
         }
         for (String s : BHTConfig.CONFIG.attackFrames.itemSource) {
@@ -62,7 +62,7 @@ public class BHT {
             if (m.matches()) {
                 RuntimeData.ATTACK_ITEM_THRESHOLDS.put(new ResourceLocation(m.group(1)), Double.parseDouble(m.group(2)));
             } else {
-                BHT.LOG.warn("[Attack Frames Config] - String " + s + " is not a valid format");
+                BHT.LOG.warn("{} is not a valid format", "[Attack Frames Config] - String " + s);
             }
         }
     }
@@ -76,7 +76,7 @@ public class BHT {
             if (m.matches()) {
                 RuntimeData.DAMAGE_SOURCE_TIMES.put(m.group(1), Integer.parseInt(m.group(2)));
             } else {
-                BHT.LOG.warn("[Damage Frames Config] - String " + s + " is not a valid format");
+                BHT.LOG.warn("{} is not a valid format", "[Damage Frames Config] - String " + s);
             }
         }
     }

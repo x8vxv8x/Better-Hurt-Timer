@@ -2,9 +2,10 @@ package arekkuusu.betterhurttimer.api.capability;
 
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.common.RuntimeData;
-import arekkuusu.betterhurttimer.api.capability.data.HurtSourceData;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTBase;
@@ -21,23 +22,30 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.Set;
 
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
 
-    private final Object2ObjectMap<String, HurtSourceData> hurtMap = new Object2ObjectArrayMap<>();
+    private final Object2LongMap<String> hurtMap = new Object2LongArrayMap<>();
     private long shieldDamageCooldownUntil = Long.MIN_VALUE;
     private long lastDirectAttackTick = Long.MIN_VALUE;
     private long currentAttackAttemptTick = Long.MIN_VALUE;
     private int currentAttackAttemptMarker = Integer.MIN_VALUE;
     private boolean currentAttackAttemptAllowed;
     private long currentDirectHitTick = Long.MIN_VALUE;
-    private final Set<Integer> currentDirectAttackers = new HashSet<>();
+    private final IntSet currentDirectAttackers = new IntOpenHashSet();
 
-    public HurtSourceData sourceData(String damageType, int waitTime) {
-        return this.hurtMap.computeIfAbsent(damageType, ignored -> new HurtSourceData(waitTime));
+    public HurtCapability() {
+        this.hurtMap.defaultReturnValue(Long.MIN_VALUE);
+    }
+
+    public boolean allowSourceDamage(String damageType, long serverTick, int waitTime) {
+        long lastHurtTick = this.hurtMap.getLong(damageType);
+        if (lastHurtTick == Long.MIN_VALUE || serverTick - lastHurtTick > waitTime) {
+            this.hurtMap.put(damageType, serverTick);
+            return true;
+        }
+        return false;
     }
 
     public boolean canDamageShield(long serverTick) {

@@ -4,6 +4,7 @@ import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.common.RuntimeData;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -18,9 +19,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class CommandExport extends CommandBase {
+
+    private static final String[] SUBCOMMANDS = {"damageFrames", "attackFrames", "mobIdListAll"};
 
     @Override
     public String getName() {
@@ -34,7 +36,7 @@ public class CommandExport extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "Usage: /" + getName() + " [damageFrames/attackFrames/mobIdListAll]";
+        return "Usage: /" + getName() + " <damageFrames|attackFrames|mobIdListAll>";
     }
 
     @Override
@@ -45,59 +47,67 @@ public class CommandExport extends CommandBase {
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "damageFrames", "attackFrames", "mobIdListAll");
+            return getListOfStringsMatchingLastWord(args, SUBCOMMANDS);
         }
         return super.getTabCompletions(server, sender, args, targetPos);
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        File file = Objects.requireNonNull(server.getServer()).getDataDirectory();
-        if (file.exists() && file.canWrite() && file.isDirectory()) {
-            try {
-                File exportFile = new File(file.getCanonicalPath()
-                        + File.separator + "config"
-                        + File.separator + "bht",
-                        args[0] + ".txt"
-                );
-                //noinspection ResultOfMethodCallIgnored
-                exportFile.getParentFile().mkdirs();
-                if (exportFile.createNewFile()) {
-                    message(sender, "export.created");
-                } else {
-                    message(sender, "export.overwritten");
-                }
-                FileWriter export = new FileWriter(exportFile);
-                switch (args[0]) {
-                    case "damageFrames":
-                        for (Map.Entry<String, Integer> entry : RuntimeData.DAMAGE_SOURCE_TIMES.entrySet()) {
-                            export.write(entry.getKey() + ":" + entry.getValue() + "\n");
-                        }
-                        break;
-                    case "attackFrames":
-                        for (Map.Entry<ResourceLocation, Double> entry : RuntimeData.ATTACK_THRESHOLDS.entrySet()) {
-                            ResourceLocation location = entry.getKey();
-                            Double timer = entry.getValue();
-                            export.write(location.toString() + ":" + timer + "\n");
-                        }
-                        break;
-                    case "mobIdListAll":
-                        for (ResourceLocation location : GameRegistry.findRegistry(EntityEntry.class).getKeys()) {
-                            export.write(location.toString() + "\n");
-                        }
-                        break;
-                }
-                export.close();
-            } catch (IOException e) {
-                message(sender, "export.unsuccessful");
-                e.printStackTrace();
-            } finally {
-                message(sender, "export.successful");
-            }
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        if (args.length != 1) {
+            throw new CommandException("command.bht_export.no_subcommand");
         }
+
+        String subCommand = args[0];
+        if (!isValidSubCommand(subCommand)) {
+            throw new CommandException("command.bht_export.invalid_subcommand", subCommand);
+        }
+
+        File exportDir = new File(server.getDataDirectory(), "config/bht");
+        if (!exportDir.exists() && !exportDir.mkdirs()) {
+            throw new CommandException("command.bht_export.dir_failed");
+        }
+
+        File exportFile = new File(exportDir, subCommand + ".txt");
+        boolean existed = exportFile.exists();
+
+        try (FileWriter writer = new FileWriter(exportFile)) {
+            switch (subCommand) {
+                case "damageFrames":
+                    for (Map.Entry<String, Integer> entry : RuntimeData.DAMAGE_SOURCE_TIMES.entrySet()) {
+                        writer.write(entry.getKey() + ":" + entry.getValue() + "\n");
+                    }
+                    break;
+                case "attackFrames":
+                    for (Map.Entry<ResourceLocation, Double> entry : RuntimeData.ATTACK_THRESHOLDS.entrySet()) {
+                        writer.write(entry.getKey() + ":" + entry.getValue() + "\n");
+                    }
+                    break;
+                case "mobIdListAll":
+                    for (ResourceLocation location : GameRegistry.findRegistry(EntityEntry.class).getKeys()) {
+                        writer.write(location + "\n");
+                    }
+                    break;
+            }
+        } catch (IOException e) {
+            BHT.LOG.error("Export failed", e);
+            throw new CommandException("command.bht_export.unsuccessful");
+        }
+
+        sendMessage(sender, existed ? "export.overwritten" : "export.created");
+        sendMessage(sender, "export.successful");
     }
 
-    private void message(ICommandSender sender, String type, Object... args) {
+    private boolean isValidSubCommand(String subCommand) {
+        for (String valid : SUBCOMMANDS) {
+            if (valid.equals(subCommand)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void sendMessage(ICommandSender sender, String type, Object... args) {
         String key = "command." + BHT.MOD_ID + "." + type;
         sender.sendMessage(new TextComponentTranslation(key, args));
     }
