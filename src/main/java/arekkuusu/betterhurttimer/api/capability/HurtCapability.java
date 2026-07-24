@@ -14,6 +14,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -22,9 +23,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 @SuppressWarnings("ConstantConditions")
 public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, Capability.IStorage<HurtCapability> {
+
+    @CapabilityInject(HurtCapability.class)
+    public static final Capability<HurtCapability> CAPABILITY = null;
 
     private final Object2LongMap<String> hurtMap = new Object2LongArrayMap<>();
     private long shieldDamageCooldownUntil = Long.MIN_VALUE;
@@ -86,6 +91,10 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
         this.currentDirectAttackers.add(attackerId);
     }
 
+    public static Optional<HurtCapability> get(@Nullable Entity entity) {
+        return entity != null ? Optional.ofNullable(entity.getCapability(CAPABILITY, null)) : Optional.empty();
+    }
+
     public static void init() {
         CapabilityManager.INSTANCE.register(HurtCapability.class, new HurtCapability(), HurtCapability::new);
         MinecraftForge.EVENT_BUS.register(new Handler());
@@ -99,17 +108,17 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
     @Override
     @Nullable
     public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-        return capability == Capabilities.HURT_LIMITER ? Capabilities.HURT_LIMITER.cast(this) : null;
+        return capability == CAPABILITY ? CAPABILITY.cast(this) : null;
     }
 
     @Override
     public NBTTagCompound serializeNBT() {
-        return (NBTTagCompound) Capabilities.HURT_LIMITER.getStorage().writeNBT(Capabilities.HURT_LIMITER, this, null);
+        return (NBTTagCompound) CAPABILITY.getStorage().writeNBT(CAPABILITY, this, null);
     }
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-        Capabilities.HURT_LIMITER.getStorage().readNBT(Capabilities.HURT_LIMITER, this, null, nbt);
+        CAPABILITY.getStorage().readNBT(CAPABILITY, this, null, nbt);
     }
 
     @Override
@@ -129,7 +138,7 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
         @SubscribeEvent
         public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
             if (event.getObject() instanceof EntityLivingBase) {
-                event.addCapability(KEY, Capabilities.HURT_LIMITER.getDefaultInstance());
+                event.addCapability(KEY, CAPABILITY.getDefaultInstance());
                 try {
                     RuntimeData.TICKS_SINCE_LAST_SWING.setInt(((EntityLivingBase) event.getObject()), -1);
                 } catch(Exception ignored) {
@@ -139,8 +148,8 @@ public class HurtCapability implements ICapabilitySerializable<NBTTagCompound>, 
 
         @SubscribeEvent
         public void clonePlayer(PlayerEvent.Clone event) {
-            event.getEntityPlayer().getCapability(Capabilities.HURT_LIMITER, null)
-                    .deserializeNBT(event.getOriginal().getCapability(Capabilities.HURT_LIMITER, null).serializeNBT());
+            event.getEntityPlayer().getCapability(CAPABILITY, null)
+                    .deserializeNBT(event.getOriginal().getCapability(CAPABILITY, null).serializeNBT());
         }
     }
 }

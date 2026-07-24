@@ -2,7 +2,7 @@ package arekkuusu.betterhurttimer.common;
 
 import arekkuusu.betterhurttimer.BHT;
 import arekkuusu.betterhurttimer.BHTConfig;
-import arekkuusu.betterhurttimer.api.capability.Capabilities;
+import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.api.event.PreLivingKnockBackEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -56,7 +56,7 @@ public class Events {
 
         if (waitTime == null) return;
 
-        Capabilities.hurt(entity).ifPresent(capability -> {
+        HurtCapability.get(entity).ifPresent(capability -> {
             if (!capability.allowSourceDamage(damageType, serverTick, waitTime)) {
                 event.setCanceled(true);
             }
@@ -82,7 +82,7 @@ public class Events {
         int attackCooldown = Events.getAttackCooldown(attacker);
         if (attackCooldown <= 0) return;
 
-        Capabilities.hurt(attacker).ifPresent(capability -> {
+        HurtCapability.get(attacker).ifPresent(capability -> {
             long serverTick = RuntimeData.serverTick();
             int attackAttemptMarker = Events.getAttackAttemptMarker(attacker);
             if (!capability.allowDirectAttackAttempt(serverTick, attackAttemptMarker, attackCooldown)) {

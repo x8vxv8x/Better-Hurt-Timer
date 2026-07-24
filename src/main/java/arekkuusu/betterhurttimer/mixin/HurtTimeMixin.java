@@ -1,7 +1,6 @@
 package arekkuusu.betterhurttimer.mixin;
 
 import arekkuusu.betterhurttimer.BHTConfig;
-import arekkuusu.betterhurttimer.api.capability.Capabilities;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.common.Events;
 import arekkuusu.betterhurttimer.common.RuntimeData;
@@ -43,7 +42,7 @@ public abstract class HurtTimeMixin extends Entity {
     @Redirect(method = "attackEntityFrom(Lnet/minecraft/util/DamageSource;F)Z", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/EntityLivingBase;hurtResistantTime:I", ordinal = 0))
     public int attackResistantOverride(EntityLivingBase target) {
         if (target.hurtResistantTime > 0 && Events.isDirectAttack(this.preDamageSource)) {
-            HurtCapability capability = Capabilities.hurt(target).orElse(null);
+            HurtCapability capability = HurtCapability.get(target).orElse(null);
             Entity attacker = this.preDamageSource.getTrueSource();
             if (capability != null && attacker != null) {
                 long serverTick = RuntimeData.serverTick();
@@ -62,7 +61,7 @@ public abstract class HurtTimeMixin extends Entity {
             hurtResistantTime = BHTConfig.CONFIG.damageFrames.hurtResistantTimePlayer;
         }
         if (Events.isDirectAttack(source)) {
-            HurtCapability capability = Capabilities.hurt(this).orElse(null);
+            HurtCapability capability = HurtCapability.get(this).orElse(null);
             Entity attacker = source.getTrueSource();
             if (capability != null && attacker != null) {
                 long serverTick = RuntimeData.serverTick();

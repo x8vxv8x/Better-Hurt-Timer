@@ -1,7 +1,6 @@
 package arekkuusu.betterhurttimer.mixin;
 
 import arekkuusu.betterhurttimer.BHTConfig;
-import arekkuusu.betterhurttimer.api.capability.Capabilities;
 import arekkuusu.betterhurttimer.api.capability.HurtCapability;
 import arekkuusu.betterhurttimer.common.RuntimeData;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,7 +14,7 @@ public abstract class DamageShieldMixin {
 
     @Redirect(method = "attackEntityFrom(Lnet/minecraft/util/DamageSource;F)Z", at = @At(target = "Lnet/minecraft/entity/EntityLivingBase;damageShield(F)V", value = "INVOKE"), require = 0)
     public void damageShield(EntityLivingBase entity, float damage) {
-        HurtCapability capability = Capabilities.hurt(entity).orElse(null);
+        HurtCapability capability = HurtCapability.get(entity).orElse(null);
         if (capability != null) {
             long serverTick = RuntimeData.serverTick();
             if (!capability.canDamageShield(serverTick)) {
